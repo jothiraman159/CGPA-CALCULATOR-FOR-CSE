@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CGPA Calculator for CSE</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f7f9fc;
+    }
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    .container {
+      width: 90%;
+      max-width: 900px;
+      background: #fff;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    select, input {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      outline: none;
+      margin: 5px 0;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 20px 0;
+    }
+    button:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    }
+    #result, #combinedResult {
+      font-size: 22px;
+      font-weight: bold;
+      color: #333;
+      margin-top: 20px;
+      text-align: center;
+    }
+    #arrearPapers, #studyTips {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #resultLink {
+      margin-top: 10px;
+      text-align: center;
+    }
+    #gradeModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    textarea {
+      width: 100%;
+      max-width: 400px;
+      height: 100px;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      resize: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CGPA Calculator for CSE</h1>
+    <div>
+      <label for="numSemesters">Select Number of Semesters:</label>
+      <select id="numSemesters" onchange="updateSemesterOptions()">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+      </select>
+    </div>
+    <div>
+      <label for="semester">Select Semesters:</label>
+      <select id="semester" multiple onchange="loadSubjects()"></select>
+    </div>
+    <div id="subjectTable"></div>
+    <button onclick="calculateCGPA()">Calculate CGPA</button>
+    <div id="result"></div>
+    <div id="combinedResult"></div>
+    <div id="resultLink"></div>
+    
+    <div id="arrearPapers"></div>
+    <div id="studyTips"></div>
+
+    <!-- Feedback Form -->
+    <div id="feedback">
+      <h2>Feedback</h2>
+      <textarea id="feedbackText" placeholder="Enter your feedback here..."></textarea>
+      <button onclick="submitFeedback()">Submit Feedback</button>
+    </div>
+  </div>
+
+  <!-- Modal for missing grades -->
+  <div id="gradeModal">
+    <div class="modal-content">
+      <h2>Missing Grades</h2>
+      <p>Please select a grade for all subjects before calculating CGPA.</p>
+      <button onclick="closeModal()">Close</button>
+    </div>
+  </div>
+
+<script>
+    const semesterData = {
+      1: [
+        { name: "Mathematics-I", credits: 4 },
+        { name: "Engineering Physics", credits: 3 },
+        { name: "Engineering Chemistry", credits: 3 },
+        { name: "Professional English. - I", credits: 3 },
+        { name: "Heritage of Tamils ", credits: 1 },
+        { name: "Python Programming", credits: 3 },
+        { name: "Problem Solving Laboratory", credits: 2 },
+        { name: "Physics and chemistry Laboratory", credits: 2 },
+        { name: "English Laboratory", credits: 1 }
+      ],
+      2: [
+        { name: "Statistics and Numerical Method", credits: 4 },
+        { name: "Physics for Information Science", credits: 3 },
+        { name: "Engineering Graphics", credits: 4 },
+        { name: "Programming in C", credits: 3 },
+        { name: "Profesional English - II ", credits: 2 },
+        { name: "Tamils and Technology", credits: 1 },
+        { name: "Basic Electrical and Electronics Engineering", credits: 3 },
+        { name: "Engineering Practices Laboratory", credits: 2 },
+        { name: "Programming in C Laboratory", credits: 2 },
+        { name: "Communication Laboratory", credits: 2 }
+      ],
+      3: [
+        { name: "Discrete Mathematics", credits: 4 },
+        { name: "Digital Principles and Computer Organization", credits: 4 },
+        { name: "Data Structures", credits: 3 },
+        { name: "Object Oriented Programming", credits: 3 },
+        { name: "Foundations of Data Science ", credits: 3 },
+        { name: "Data Structures Laboratory", credits: 1.5 },
+        { name: "OOP Laboratory", credits: 1.5 },
+        { name: "Data Science Laboratory", credits: 2 },
+        { name: "Professional Development", credits: 1 }
+      ],
+      4: [
+        { name: "Theory of Computation", credits: 3 },
+        { name: " Artificial intelligence and machine learning ", credits: 4 },
+        { name: "Algorithms", credits: 4 },
+        { name: "Database Management Systems", credits: 3 },
+        { name: "Introduction to Operating Systems", credits: 3 },
+        { name: "Environmental Science", credits: 2 },
+        { name: "Operating Systems", credits: 3 },
+        { name: "OS Laboratory", credits: 1.5 },
+        { name: "DBMS Laboratory", credits: 1.5 }
+      ],
+      5: [
+        { name: "Computer Networks", credits: 4 },
+        { name: "Compiler Design", credits: 4 },
+        { name: "Cryptography and Cyber Security", credits: 3 },
+        { name: "Distributed Computing", credits: 3 },
+        { name: "Professional Elective I", credits: 3 },
+        { name: "Professional Elective II", credits: 3 },
+      ],
+      6: [
+        { name: "Object Oriented Software Engineering", credits: 4 },
+        { name: "Embedded Systems and loT", credits: 4 },
+        { name: "Open Elective - I*", credits: 3 },
+        { name: "Professional Elective III", credits: 3 },
+        { name: "Professional Elective IV", credits: 3 },
+        { name: "Professional Elective V", credits: 3 },
+      ],
+      7: [
+        { name: "Human Values and Ethics", credits: 2 },
+        { name: "Elective - Management", credits: 3 },
+        { name: "Open Elective - II**", credits: 3 },
+        { name: "Open Elective - III**", credits: 3 },
+        { name: "Open Elective - IV**", credits: 3 },
+        { name: "Summer Internship", credits: 2 }
+      ],
+      
+      8: [
+        { name: "Project Work", credits: 10 }
+      
+      ]
+    };
+        
+        
+          const gradePoints = {
+      "O": 10,
+      "A+": 9,
+      "A": 8,
+      "B+": 7,
+      "B": 6,
+      "C": 5,
+      "U/A": 0
+    };
+
+    let previousCGPA = null;
+
+    function updateSemesterOptions() {
+      const numSemesters = document.getElementById("numSemesters").value;
+      const semesterSelect = document.getElementById("semester");
+
+      semesterSelect.innerHTML = ""; // Clear previous options
+
+      for (let i = 1; i <= numSemesters; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = "Semester " + i;
+        semesterSelect.appendChild(option);
+      }
+    }
+
+    function loadSubjects() {
+      const selectedSemesters = Array.from(document.getElementById("semester").selectedOptions).map(opt => opt.value);
+      const subjectTable = document.getElementById("subjectTable");
+
+      if (selectedSemesters.length === 0) {
+        subjectTable.innerHTML = "";
+        return;
+      }
+
+      let tableHTML = <table><thead><tr><th>Subject</th><th>Credits</th><th>Grade</th></tr></thead><tbody>;
+
+      selectedSemesters.forEach((semester) => {
+        semesterData[semester].forEach(subject => {
+          tableHTML += `
+            <tr>
+              <td>${subject.name}</td>
+              <td>${subject.credits}</td>
+              <td>
+                <select>
+                  <option value="">Select Grade</option>
+                  <option value="O">O</option>
+                  <option value="A+">A+</option>
+                  <option value="A">A</option>
+                  <option value="B+">B+</option>
+                  <option value="B">B</option>
+                  <option value="C">C</option>
+                  <option value="U/A">U/A</option>
+                </select>
+              </td>
+            </tr>`;
+        });
+      });
+
+      tableHTML += </tbody></table>;
+      subjectTable.innerHTML = tableHTML;
+    }
+
+    function calculateCGPA() {
+      const selectedSemesters = Array.from(document.getElementById("semester").selectedOptions).map(opt => opt.value);
+      let totalCredits = 0;
+      let totalGradePoints = 0;
+      let allGradesSelected = true;
+      let arrearSubjects = [];
+      let hasUA = false;
+
+      selectedSemesters.forEach((semester) => {
+        semesterData[semester].forEach((subject, index) => {
+          const gradeSelect = document.querySelectorAll("#subjectTable select")[index];
+          const grade = gradeSelect.value;
+
+          if (!grade) {
+            allGradesSelected = false;
+          } else {
+            totalCredits += subject.credits;
+            totalGradePoints += gradePoints[grade] * subject.credits;
+
+            if (grade === "U/A") {
+              hasUA = true;
+              arrearSubjects.push(subject.name);
+            }
+          }
+        });
+      });
+
+      if (!allGradesSelected) {
+        showModal();
+        return;
+      }
+
+      // Calculate CGPA
+      const newCGPA = (totalGradePoints / totalCredits).toFixed(2);
+      let combinedCGPA = newCGPA;
+
+      if (previousCGPA !== null) {
+        combinedCGPA = ((parseFloat(previousCGPA) + parseFloat(newCGPA)) / 2).toFixed(2); // Average with previous CGPA
+      }
+
+      document.getElementById("result").innerHTML = Your CGPA for the selected semesters is: ${newCGPA};
+      document.getElementById("combinedResult").innerHTML = Combined CGPA: ${combinedCGPA};
+      
+      // Add result portal link
+      document.getElementById("resultLink").innerHTML = <a href="https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://coe1.annauniv.edu/result&ved=2ahUKEwjx6ISIwv6IAxW5zDgGHdf2AAYQFnoECBgQAQ&usg=AOvVaw2rzGy9AAV_mREnXZkrTWxz" target="_blank">Click Here To See Your Result</a>;
+
+      if (hasUA) {
+        const arrearDiv = document.getElementById("arrearPapers");
+        arrearDiv.innerHTML = <h2 style="color: red;">Arrear Papers:</h2><p>${arrearSubjects.join(', ')}</p>;
+        document.getElementById("studyTips").innerHTML = `
+          <h2>Study Suggestions:</h2>
+          <ul>
+            <li>Understand the Syllabus: Know the key topics.</li>
+            <li>Create a Study Schedule: Plan your study time effectively.</li>
+            <li>Practice Past Papers: Familiarize yourself with exam formats.</li>
+            <li>Focus on Weak Areas: Spend extra time on challenging subjects.</li>
+            <li>Engage in Active Learning: Summarize and teach concepts.</li>
+            <li>Form Study Groups: Collaborate with peers for better understanding.</li>
+            <li>Stay Healthy: Maintain a balanced diet and get enough sleep.</li>
+            <li>Use Online Resources: Access educational materials for help.</li>
+            <li>Revise Regularly: Keep reviewing topics to reinforce memory.</li>
+            <li>Manage Stress: Use relaxation techniques to stay positive.</li>
+          </ul>
+        `;
+      } else {
+        document.getElementById("arrearPapers").innerHTML = "";
+        document.getElementById("studyTips").innerHTML = "";
+      }
+
+      previousCGPA = newCGPA; // Update the previous CGPA
+    }
+
+    function showModal() {
+      document.getElementById("gradeModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("gradeModal").style.display = "none";
+    }
+
+    function submitFeedback() {
+      const feedback = document.getElementById("feedbackText").value;
+      if (feedback.trim() !== "") {
+        alert("Thank you for your feedback!");
+        document.getElementById("feedbackText").value = "";
+      }
+    }
+  </script>
+</body>
+</html>
